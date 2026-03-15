@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Learning - Fixed Mobile</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jQuery-rwdImageMaps/1.6/jquery.rwdImageMaps.min.js"></script>
+    <style>
+        body { margin: 0; padding: 0; text-align: center; background-color: #ffffff; font-family: sans-serif; }
+        .instruction { background: #333; color: white; padding: 10px; font-size: 14px; position: relative; z-index: 2000; }
+        
+        /* الحاوية يجب أن تكون مضبوطة بدقة */
+        .image-container { 
+            position: relative; 
+            display: inline-block; 
+            margin: 20px auto; 
+            max-width: 100%;
+        }
+
+        img { 
+            max-width: 100%; 
+            height: auto; 
+            display: block; 
+            z-index: 1;
+        }
+
+        /* مربع التركيز المطور */
+        #highlight-box {
+            position: absolute;
+            pointer-events: none;
+            /* استخدام shadow ضخم لتغطية الشاشة */
+            box-shadow: 0 0 0 5000px rgba(0, 0, 0, 0.7); 
+            z-index: 1000;
+            display: none;
+            border: 2px solid #fff;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        /* إخفاء أي زيادة خارج الحاوية لضمان عدم ظهور شريط تمرير */
+        .outer-wrapper { overflow: hidden; position: relative; width: 100%; }
+
+        area { cursor: pointer; outline: none; }
+    </style>
+</head>
+<body>
+
+    <div class="instruction">أنقر على الكلمة لسماع النطق</div>
+
+    <div class="outer-wrapper">
+        <div class="image-container" id="container">
+            <div id="highlight-box"></div>
+            <img src="symbols.png" usemap="#image-map" id="colorImage">
+            <map name="image-map">
+    <area onclick="speak('SYMBOLS', this)" coords="322,116,1000,240" shape="rect">
+    <area onclick="speak('PLUS', this)" coords="330,254,576,349" shape="rect">
+    <area onclick="speak('MINUS', this)" coords="726,250,1014,332" shape="rect">
+    <area onclick="speak('times', this)" coords="294,370,586,463" shape="rect">
+    <area onclick="speak('DIVIDED BY', this)" coords="710,375,1246,468" shape="rect">
+    <area onclick="speak('EQUAL to', this)" coords="312,558,751,650" shape="rect">
+    <area onclick="speak('GREATER than', this)" coords="844,480,1258,636" shape="rect">
+    <area onclick="speak('LESS THAN', this)" coords="313,662,553,821" shape="rect">
+    <area onclick="speak('PARENTHESES', this)" coords="1297,797,678,707" shape="rect">
+    <area onclick="speak('CURLY BRACKETS', this)" coords="268,902,719,1074" shape="rect">
+    <area onclick="speak('SQUARE BRACKETS', this)" coords="843,867,1308,1032" shape="rect">
+    <area onclick="speak('DOT', this)" coords="243,1107,434,1198" shape="rect">
+    <area onclick="speak('COMMA', this)" coords="527,1092,860,1179" shape="rect">
+    <area onclick="speak('COLON', this)" coords="990,1046,1285,1132" shape="rect">
+    <area onclick="speak('SEMI COLON', this)" coords="198,1219,502,1383" shape="rect">
+    <area onclick="speak('QUATATION', this)" coords="661,1212,1189,1310" shape="rect">
+    <area onclick="speak('QUESTION MARK', this)" coords="213,1413,653,1582" shape="rect">
+    <area onclick="speak('EXCLAMATION MARK', this)" coords="726,1343,1293,1498" shape="rect">
+    <area onclick="speak('PERCENT', this)" coords="122,1615,660,1795" shape="rect">
+    <area onclick="speak('AT', this)" coords="956,1507,1202,1644" shape="rect">
+    <area onclick="speak('HASHTAG', this)" coords="796,1669,1243,1768" shape="rect">
+</map>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#colorImage').rwdImageMaps();
+            
+            document.body.addEventListener('touchstart', function() {
+                window.speechSynthesis.getVoices();
+            }, {once: true});
+        });
+
+        function speak(word, element) {
+            window.speechSynthesis.cancel();
+            var msg = new SpeechSynthesisUtterance(word);
+            msg.lang = 'en-US';
+            msg.rate = 0.9;
+
+            msg.onend = function() {
+                document.getElementById('highlight-box').style.display = 'none';
+            };
+            
+            window.speechSynthesis.speak(msg);
+
+            // استدعاء وظيفة التظليل مع تأخير بسيط لضمان دقة الحسابات على الموبايل
+            setTimeout(function() {
+                showHighlight(element);
+            }, 10);
+        }
+
+        function showHighlight(areaElement) {
+            var img = document.getElementById('colorImage');
+            var highlight = document.getElementById('highlight-box');
+            
+            // قراءة الإحداثيات الحالية (التي تم تعديلها بواسطة مكتبة rwdImageMaps)
+            var currentCoords = areaElement.coords.split(',');
+            var xCoords = [], yCoords = [];
+
+            for (var i = 0; i < currentCoords.length; i += 2) {
+                xCoords.push(parseFloat(currentCoords[i]));
+                yCoords.push(parseFloat(currentCoords[i+1]));
+            }
+
+            var minX = Math.min(...xCoords);
+            var maxX = Math.max(...xCoords);
+            var minY = Math.min(...yCoords);
+            var maxY = Math.max(...yCoords);
+
+            // تحديد الموقع بدقة متناهية بالنسبة للحاوية
+            highlight.style.left = minX + "px";
+            highlight.style.top = minY + "px";
+            highlight.style.width = (maxX - minX) + "px";
+            highlight.style.height = (maxY - minY) + "px";
+            
+            highlight.style.display = "block";
+        }
+    </script>
+</body>
+</html>
